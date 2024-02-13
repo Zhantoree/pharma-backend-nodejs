@@ -1,11 +1,12 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import mongoose from "mongoose";
-import router from "./router/index.js";
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import authRouter from "./router/authRouter.js";
 import errorMiddleware from "./middleware/error-middleware.js";
+import doctorRouter from "./router/doctorRouter.js";
+import router from "./router/index.js";
 dotenv.config()
 
 const app = express()
@@ -22,7 +23,8 @@ app.use(cors({
 
 app.use(errorMiddleware)
 
-// Router
+// Routes
+app.use('/doctor/', doctorRouter)
 app.use('/', router)
 app.use('/auth/', authRouter)
 

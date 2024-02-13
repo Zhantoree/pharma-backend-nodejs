@@ -13,7 +13,7 @@ const UserSchema = new Schema({
         firstName: {type: String, required: true},
         lastName: {type: String, required: true},
         gender: {type: String, value: "MALE" | "FEMALE", default: null},
-        contactNumber: {type: String, default: null},
+        contactNumber: {type: String, unique: false,default: null},
         address: {type: String, default: null}
     }
 })

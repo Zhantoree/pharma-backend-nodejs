@@ -1,91 +1,50 @@
 import UserModel from "../models/user-model.js";
-import bcrypt from 'bcrypt'
-import {v4 as uuid} from "uuid";
-import mailService from "./mail-service.js";
-import tokenService from "./token-service.js";
-import UserDto from "../dtos/user-dto.js";
 import ApiError from "../exceptions/api-error.js";
 import Role from "../models/role-model.js";
 import TokenModel from "../models/token-model.js";
+import appointmentModel from "../models/appointment-model.js";
+import FeedbackModel from "../models/feedback-model.js";
 class UserService {
-    async registration(email, password, username, profile ) {
-        const candidate = await UserModel.findOne({email})
-        if (candidate) {
-            throw ApiError.BadRequest("Пользователь с такой почтой уже существует")
-        }
-        const hashPassword = await bcrypt.hash(password, 3)
-        const activationLink = uuid();
 
-        const userRoles = await Role.findOne({value: "CLIENT"})
-        const user = await UserModel.create({email, password: hashPassword, activationLink, roles: [userRoles.value], username: username, profile: profile})
-        await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
-
-        const userDto = new UserDto(user)
-        const tokens = tokenService.generateTokens({...userDto})
-        await tokenService.saveToken(userDto.id, tokens.refreshToken);
-
-        return {...tokens, user: userDto}
+    async getAppointments(userId) {
+        const monthData = new Date()
+        monthData.setMonth(monthData.getMonth() - 1)
+        const apps = await appointmentModel.find({dateTime: {$gte: monthData}})
+        return apps
     }
 
-    async login(email, password) {
-        const user = await UserModel.findOne({email})
-        if (!user) {
-            throw ApiError.BadRequest("Такого пользователя не существует")
+    async makeAppointment(doctorId, clientId, dateTime, reason) {
+        const isExist = await appointmentModel.findOne({dateTime: dateTime, doctorId: doctorId})
+        if(isExist) {
+            console.log("exception")
+            throw ApiError.BadRequest("Запись на это время уже существует")
         }
-        const isPasswordsEqual = await bcrypt.compare(password, user.password)
-        if (!isPasswordsEqual) {
-            throw ApiError.BadRequest("Неверный пароль")
-        }
-        const userDto = new UserDto(user)
-        const tokens = tokenService.generateTokens({...userDto})
-        await tokenService.saveToken(userDto.id, tokens.refreshToken);
-
-        return {...tokens, user: userDto}
+        const app = await appointmentModel.create({doctorId, clientId, dateTime, status: "SCHEDULED", reason})
+        return app
     }
 
-    async activate(activationLink) {
-        let user = await UserModel.findOne({activationLink})
-        if (!user) {
-            throw ApiError.BadRequest("Такого пользователя не существует")
+    async cancelAppointment(appId) {
+        const candidate = await appointmentModel.findOne({_id: appId})
+        if(!candidate) {
+            throw ApiError.BadRequest("There is no such appointment")
         }
-        user.isActivated = true;
-        await user.save();
+        const newApp = await appointmentModel.updateOne({_id: appId},
+            {
+                $set: {status: "CANCELLED"}
+            })
+        return newApp
     }
 
-    async logout(refreshToken) {
-        let token = await tokenService.removeToken(refreshToken)
-        return token
+    async giveFeedback(doctorId, clientId, feedback, rating, date) {
+        const candidate = await FeedbackModel.findOne({doctorId: doctorId, date: date})
+        if(candidate) {
+            console.log(candidate)
+            throw ApiError.BadRequest("Feedback has been already given")
+        }
+        const newFeedback = await FeedbackModel.create({doctorId, clientId, feedback, rating, date})
+        return newFeedback;
     }
 
-    async refresh(refreshToken) {
-        if(!refreshToken) {
-            throw ApiError.UnauthorizedError()
-        }
-        const userData = tokenService.validateRefreshToken(refreshToken)
-        if(!userData) {
-            throw ApiError.UnauthorizedError()
-        }
-        const tokenFromDb = tokenService.findToken(refreshToken)
-        if(!userData || !tokenFromDb) {
-            throw ApiError.UnauthorizedError()
-        }
-        const user = UserModel.findById(userData.id)
-        const userDto = new UserDto(user)
-        const tokens = tokenService.generateTokens({...userDto})
-        await tokenService.saveToken(userDto.id, tokens.refreshToken);
-
-        return {...tokens, user: userDto}
-    }
-
-    async getUsers() {
-        const users = await UserModel.find();
-        return users
-    }
-    async deleteUser(id) {
-        const user = await UserModel.deleteOne({"id":id})
-        const token = await TokenModel.deleteOne({"id": id})
-        return {user: user, token: token}
-    }
     async promoteUser(id) {
         const candidate = await UserModel.findById(id)
         if(!candidate) {

@@ -1,87 +1,50 @@
-import UserService from "../service/user-service.js";
-import {validationResult} from "express-validator";
-import ApiError from "../exceptions/api-error.js";
 import userService from "../service/user-service.js";
-import roleModel from "../models/role-model.js";
+import DoctorService from "../service/doctor-service.js";
 
 class UserController {
     // Для всех
-    async registration(req,res,next) {
-        try {
-            console.log(req.body, "REQUEST")
-            const errors = validationResult(req)
-            if(!errors.isEmpty()) {
-                return next(ApiError
-                    .BadRequest("Ошибка при валидации",errors.array()))
-            }
-            const {email, password, username, profile} = req.body;
-            const userData = await UserService.registration(email, password, username, profile)
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*1000, httpOnly: true})
-            return res.json(userData)
-        } catch (e) {
-            next(e)
-        }
-    }
-    async login(req,res,next) {
-        try {
-            const {email, password} = req.body
-            const userData = await UserService.login(email, password)
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*1000, httpOnly: true})
-            return res.json(userData)
-        } catch (e) {
-            next(e)
-        }
-    }
-    async logout(req,res,next) {
-        try {
-            const {refreshToken} = req.cookies
-            const tokenData = await UserService.logout(refreshToken)
-            res.clearCookie('refreshToken')
-            return res.json(tokenData)
 
-        } catch (e) {
-            next(e)
-        }
-    }
-    async activate(req,res,next) {
+    async getAppointments(req, res, next) {
         try {
-            const activationLink = req.params.link
-            await UserService.activate(activationLink)
-            return res.redirect(process.env.CLIENT_URL)
-        } catch (e) {
-            next(e)
-
-        }
-    }
-    async refresh(req,res,next) {
-        try {
-            const {refreshToken} = req.cookies;
-            const userData = await userService.refresh(refreshToken)
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*1000, httpOnly: true})
-            return res.json(userData)
+            const {userId} = req.body
+            const apps = await userService.getAppointments(userId)
+            return res.json(apps)
         } catch (e) {
             next(e)
         }
     }
 
-    async getUsers(req,res,next) {
+    async makeAppointment(req, res, next) {
         try {
-            const users = await userService.getUsers()
-            return res.json(users)
+            const {doctorId, clientId, dateTime, reason} = req.body
+            const app = await userService.makeAppointment(doctorId, clientId, dateTime, reason);
+            return res.json(app)
         } catch (e) {
             next(e)
         }
     }
 
-    async deleteUser(req, res, next) {
+    async cancelAppointment(req, res, next) {
         try {
-            const userId = req.params.id
-            const userDelete = await userService.deleteUser(userId)
-            return res.json(userDelete)
+            const {appId} = req.body
+            const cancelledApp = await userService.cancelAppointment(appId)
+            return res.json(cancelledApp)
         } catch (e) {
             next(e)
         }
     }
+
+    async giveFeedback(req, res, next) {
+        try {
+            const {doctorId, clientId, feedback, rating, date} = req.body
+            const result = await userService
+                .giveFeedback(doctorId, clientId, feedback, rating, date)
+            return res.json(doctorId, feedback, rating)
+        } catch (e) {
+            next(e)
+        }
+    }
+
 
     async promoteUser(req, res, next) {
         try {
