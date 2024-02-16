@@ -1,6 +1,8 @@
 import AppointmentModel from "../models/appointment-model.js";
 import ApiError from "../exceptions/api-error.js";
 import appointmentModel from "../models/appointment-model.js";
+import BlogModel from "../models/blog-model.js";
+import CommentModel from "../models/comment-model.js";
 
 class DoctorService {
     async getAppointments(id) {
@@ -16,21 +18,37 @@ class DoctorService {
 
     async completeAppointment(appId) {
         const candidate = await appointmentModel.findOne({_id: appId})
-        console.log(candidate)
         if(!candidate) {
             console.log(candidate, appId)
             throw ApiError.BadRequest("There is no such appointment")
         }
-        console.log("before", candidate)
-
         const newApp = await appointmentModel.updateOne({_id: appId},
             {
                 $set: {status: "COMPLETE"}
             })
-        console.log("after", newApp)
-
         return newApp
     }
+
+    async createBlog(doctorId, title, content, date) {
+        const newBlog = await BlogModel.create({doctorId, title, content, date})
+        return newBlog;
+    }
+
+    async commentBlog(blogId, userId, parentCommentId, content, dateTime, replies) {
+        if(parentCommentId) {
+            const newReplyComment = await CommentModel.create({
+                blogId, userId, parentCommentId, content, dateTime, replies
+            })
+            const existingComment = await CommentModel.findOne({_id: parentCommentId})
+            existingComment.replies = [
+                ...existingComment.replies, newReplyComment._id
+            ]
+            existingComment.save()
+        }
+        const newTopComment = await CommentModel.create({blogId, userId, content, dateTime})
+        return newTopComment;
+    }
+
 }
 
 export default new DoctorService()

@@ -1,5 +1,4 @@
 import userService from "../service/user-service.js";
-import DoctorService from "../service/doctor-service.js";
 
 class UserController {
     // Для всех
@@ -9,6 +8,16 @@ class UserController {
             const {userId} = req.body
             const apps = await userService.getAppointments(userId)
             return res.json(apps)
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    async getDoctors(req, res, next) {
+        try {
+            const {page, pagesize} = req.query
+            const result = await userService.getDoctors(Number(page), Number(pagesize))
+            return res.json(result)
         } catch (e) {
             next(e)
         }
@@ -46,15 +55,6 @@ class UserController {
     }
 
 
-    async promoteUser(req, res, next) {
-        try {
-            const userId = req.params.id
-            const userPromote = await userService.promoteUser(userId)
-            return res.json(userPromote)
-        } catch (e) {
-            next(e)
-        }
-    }
 }
 
 export default new UserController()

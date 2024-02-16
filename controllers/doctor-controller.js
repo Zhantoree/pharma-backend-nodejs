@@ -19,6 +19,29 @@ class DoctorController {
             next(e)
         }
     }
+
+    async createBlog(req, res, next) {
+        try {
+            const {doctorId,
+                title, content, date} = req.body
+            const newBlog = await DoctorService
+                .createBlog(doctorId,
+                title, content, date)
+            return res.json(newBlog)
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    async   commentBlog(req, res, next) {
+        try {
+            const {blogId, userId, parentCommentId, content, dateTime, replies} = req.body
+            const newComment = await DoctorService.commentBlog(blogId, userId, parentCommentId, content, dateTime, replies)
+            return res.json(newComment)
+        } catch (e) {
+            next(e)
+        }
+    }
 }
 
 export default new DoctorController()
