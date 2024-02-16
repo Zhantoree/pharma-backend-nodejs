@@ -1,9 +1,11 @@
 import userModel from "../models/user-model.js";
 import ApiError from "../exceptions/api-error.js";
+import ExistCheck from "../exceptions/exist-check.js";
 
 class AdminService {
     async promoteDoctor(id) {
-        const newDoctor = await userModel.findOne({_id: id})
+
+        const newDoctor = await ExistCheck.checkUserExist({_id: id})
         newDoctor.roles.forEach(role => {
             if(role === "DOCTOR") {
                 throw ApiError.BadRequest("User is already a doctor")
@@ -17,19 +19,19 @@ class AdminService {
     }
 
     async demoteDoctor(id) {
-        const newDoctor = await userModel.findOne({_id: id})
-        let res = false
+        const newDoctor = await ExistCheck.checkUserExist({_id: id})
+        let isDoctor = false
 
         newDoctor.roles = newDoctor.roles.map(role => {
             if(role === "DOCTOR") {
-                res = true
+                isDoctor = true
             }
             if(role !== "DOCTOR"){
                 return role
             }
         })
-        if(!res){
-            throw ApiError.BadRequest("User is already a doctor")
+        if(!isDoctor){
+            throw ApiError.BadRequest("User was not a doctor")
         }
         newDoctor.save()
         return newDoctor

@@ -6,6 +6,7 @@ import Role from "../models/role-model.js";
 import mailService from "./mail-service.js";
 import UserDto from "../dtos/user-dto.js";
 import tokenService from "./token-service.js";
+import ExistCheck from "../exceptions/exist-check.js";
 
 class AuthService {
     async registration(email, password, username, profile ) {
@@ -28,10 +29,7 @@ class AuthService {
     }
 
     async login(email, password) {
-        const user = await UserModel.findOne({email})
-        if (!user) {
-            throw ApiError.BadRequest("Такого пользователя не существует")
-        }
+        const user = await ExistCheck.checkUserExist({email: email})
         const isPasswordsEqual = await bcrypt.compare(password, user.password)
         if (!isPasswordsEqual) {
             throw ApiError.BadRequest("Неверный пароль")
@@ -44,7 +42,7 @@ class AuthService {
     }
 
     async activate(activationLink) {
-        let user = await UserModel.findOne({activationLink})
+        let user = await ExistCheck.checkUserExist({activationLink: activationLink})
         if (!user) {
             throw ApiError.BadRequest("Такого пользователя не существует")
         }

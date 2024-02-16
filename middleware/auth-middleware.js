@@ -1,5 +1,5 @@
 import ApiError from "../exceptions/api-error.js";
-import tokenService from "../service/token-service.js";
+import tokenService from "../services/token-service.js";
 
 export default function (req, res, next) {
     try {

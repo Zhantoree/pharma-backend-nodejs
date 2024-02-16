@@ -3,25 +3,21 @@ import ApiError from "../exceptions/api-error.js";
 import appointmentModel from "../models/appointment-model.js";
 import BlogModel from "../models/blog-model.js";
 import CommentModel from "../models/comment-model.js";
+import ExistCheck from "../exceptions/exist-check.js";
 
 class DoctorService {
     async getAppointments(id) {
         const monthData = new Date()
         monthData.setMonth(monthData.getMonth() - 1)
-        const apps = await AppointmentModel.find({doctorId: id,
-            dateTime: {$gte: monthData}})
-        if(!apps) {
-            throw ApiError.BadRequest("No data found")
-        }
+        const apps = await ExistCheck.checkAppointmentExist({
+            doctorId: id,
+            dateTime: {$gte: monthData}
+        })
         return apps
     }
 
     async completeAppointment(appId) {
-        const candidate = await appointmentModel.findOne({_id: appId})
-        if(!candidate) {
-            console.log(candidate, appId)
-            throw ApiError.BadRequest("There is no such appointment")
-        }
+        const candidate = await ExistCheck.checkAppointmentExist({_id: appId})
         const newApp = await appointmentModel.updateOne({_id: appId},
             {
                 $set: {status: "COMPLETE"}
@@ -35,7 +31,7 @@ class DoctorService {
     }
 
     async commentBlog(blogId, userId, parentCommentId, content, dateTime, replies) {
-        if(parentCommentId) {
+        if (parentCommentId) {
             const newReplyComment = await CommentModel.create({
                 blogId, userId, parentCommentId, content, dateTime, replies
             })

@@ -1,4 +1,4 @@
-import DoctorService from "../service/doctor-service.js";
+import DoctorService from "../services/doctor-service.js";
 
 class DoctorController {
     async getAppointments(req, res, next) {

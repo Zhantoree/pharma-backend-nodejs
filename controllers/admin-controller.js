@@ -1,4 +1,4 @@
-import AdminService from "../service/admin-service.js";
+import AdminService from "../services/admin-service.js";
 
 class AdminController {
     async promoteDoctor(req, res, next) {
