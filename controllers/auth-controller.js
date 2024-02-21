@@ -5,7 +5,6 @@ import AuthService from "../services/auth-service.js";
 class AuthController {
     async registration(req,res,next) {
         try {
-            console.log(req.body, "REQUEST")
             const errors = validationResult(req)
             if(!errors.isEmpty()) {
                 return next(ApiError

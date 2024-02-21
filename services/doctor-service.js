@@ -1,31 +1,35 @@
-import AppointmentModel from "../models/appointment-model.js";
 import ApiError from "../exceptions/api-error.js";
 import appointmentModel from "../models/appointment-model.js";
 import BlogModel from "../models/blog-model.js";
 import CommentModel from "../models/comment-model.js";
 import ExistCheck from "../exceptions/exist-check.js";
+import DoctorModel from "../models/doctor-model.js";
 
 class DoctorService {
-    async getAppointments(id) {
+    async getAppointments(userId) {
         const monthData = new Date()
+        const {doctorId} = await DoctorModel.findOne({_id: userId})
         monthData.setMonth(monthData.getMonth() - 1)
         const apps = await ExistCheck.checkAppointmentExist({
-            doctorId: id,
+            doctorId: doctorId,
             dateTime: {$gte: monthData}
         })
         return apps
     }
 
-    async completeAppointment(appId) {
-        const candidate = await ExistCheck.checkAppointmentExist({_id: appId})
-        const newApp = await appointmentModel.updateOne({_id: appId},
-            {
-                $set: {status: "COMPLETE"}
-            })
-        return newApp
+    async completeAppointment(appId, userId) {
+        const doctorId = await ExistCheck.checkDoctorExist({userId: userId})
+        const app = await ExistCheck.checkAppointmentExist({_id: appId})
+        if(app.doctorId !== doctorId) {
+            throw ApiError.NoAccess()
+        }
+        app.status = "COMPLETE"
+        app.save()
+        return app
     }
 
-    async createBlog(doctorId, title, content, date) {
+    async createBlog(userId, title, content, date) {
+        const doctorId = await ExistCheck.checkDoctorExist({userId: userId})
         const newBlog = await BlogModel.create({doctorId, title, content, date})
         return newBlog;
     }

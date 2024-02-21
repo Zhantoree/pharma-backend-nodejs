@@ -13,4 +13,8 @@ export default class ApiError extends Error {
     static BadRequest (message, errors=[]) {
         return new ApiError(500, message, errors)
     }
+
+    static NoAccess() {
+        return new ApiError(403, "You have no rights")
+    }
 }

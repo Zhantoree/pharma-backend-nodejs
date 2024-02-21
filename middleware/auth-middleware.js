@@ -18,6 +18,10 @@ export default function (req, res, next) {
             return next(ApiError.UnauthorizedError())
         }
 
+        if(userData.isBanned) {
+            return next(ApiError.BadRequest("You are banned"))
+        }
+
         req.user = userData
         next();
     } catch (e) {

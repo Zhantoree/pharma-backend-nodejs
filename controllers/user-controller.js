@@ -1,11 +1,12 @@
 import userService from "../services/user-service.js";
+import ApiError from "../exceptions/api-error.js";
 
 class UserController {
     // Для всех
 
     async getAppointments(req, res, next) {
         try {
-            const {userId} = req.body
+            const {id: userId} = req.user
             const apps = await userService.getAppointments(userId)
             return res.json(apps)
         } catch (e) {
@@ -25,8 +26,9 @@ class UserController {
 
     async makeAppointment(req, res, next) {
         try {
-            const {doctorId, clientId, dateTime, reason} = req.body
-            const app = await userService.makeAppointment(doctorId, clientId, dateTime, reason);
+            const {id: clientId} = req.user
+            const {doctorId, dateTime, reason} = req.body
+            const app = await userService.makeAppointment(doctorId, clientId, dateTime, reason, id);
             return res.json(app)
         } catch (e) {
             next(e)
@@ -35,8 +37,9 @@ class UserController {
 
     async cancelAppointment(req, res, next) {
         try {
+            const {id: userId} = req.user
             const {appId} = req.body
-            const cancelledApp = await userService.cancelAppointment(appId)
+            const cancelledApp = await userService.cancelAppointment(appId, userId)
             return res.json(cancelledApp)
         } catch (e) {
             next(e)
@@ -45,7 +48,8 @@ class UserController {
 
     async giveFeedback(req, res, next) {
         try {
-            const {doctorId, clientId, feedback, rating, date} = req.body
+            const {id: clientId} = req.user
+            const {doctorId, feedback, rating, date} = req.body
             const result = await userService
                 .giveFeedback(doctorId, clientId, feedback, rating, date)
             return res.json(doctorId, feedback, rating)

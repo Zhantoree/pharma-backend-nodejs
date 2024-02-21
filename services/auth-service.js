@@ -34,7 +34,11 @@ class AuthService {
         if (!isPasswordsEqual) {
             throw ApiError.BadRequest("Неверный пароль")
         }
+        if(user.isBanned) {
+            throw ApiError.BadRequest("You are banned")
+        }
         const userDto = new UserDto(user)
+        console.log(user, "in login")
         const tokens = tokenService.generateTokens({...userDto})
         await tokenService.saveToken(userDto.id, tokens.refreshToken);
 

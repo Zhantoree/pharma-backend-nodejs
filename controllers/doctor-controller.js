@@ -3,8 +3,8 @@ import DoctorService from "../services/doctor-service.js";
 class DoctorController {
     async getAppointments(req, res, next) {
         try {
-            const doctorId = req.params.id
-            const apps = await DoctorService.getAppointments(doctorId)
+            const {id: userId} = req.user
+            const apps = await DoctorService.getAppointments(userId)
             return res.json(apps)
         } catch (e) {
             next(e)
@@ -13,7 +13,8 @@ class DoctorController {
     async completeAppointment(req, res, next) {
         try {
             const {appId} = req.body
-            const completedApp = await DoctorService.completeAppointment(appId)
+            const {userId} = req.user
+            const completedApp = await DoctorService.completeAppointment(appId, userId)
             return res.json(completedApp)
         } catch (e) {
             next(e)
@@ -24,8 +25,9 @@ class DoctorController {
         try {
             const {doctorId,
                 title, content, date} = req.body
+            const {id: userId} = req.user
             const newBlog = await DoctorService
-                .createBlog(doctorId,
+                .createBlog(userId,
                 title, content, date)
             return res.json(newBlog)
         } catch (e) {
@@ -33,9 +35,10 @@ class DoctorController {
         }
     }
 
-    async   commentBlog(req, res, next) {
+    async commentBlog(req, res, next) {
         try {
-            const {blogId, userId, parentCommentId, content, dateTime, replies} = req.body
+            const {id: userId} = req.user
+            const {blogId, parentCommentId, content, dateTime, replies} = req.body
             const newComment = await DoctorService.commentBlog(blogId, userId, parentCommentId, content, dateTime, replies)
             return res.json(newComment)
         } catch (e) {

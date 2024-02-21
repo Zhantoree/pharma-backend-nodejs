@@ -3,12 +3,13 @@ import ApiError from "../exceptions/api-error.js";
 import appointmentModel from "../models/appointment-model.js";
 import FeedbackModel from "../models/feedback-model.js";
 import ExistCheck from "../exceptions/exist-check.js";
+import AppointmentModel from "../models/appointment-model.js";
 class UserService {
 
     async getAppointments(userId) {
         const monthData = new Date()
         monthData.setMonth(monthData.getMonth() - 1)
-        const apps = await ExistCheck.checkAppointmentExist({dateTime: {$gte: monthData}})
+        const apps = await ExistCheck.checkAppointmentExist({clientId: userId,dateTime: {$gte: monthData}})
         return apps
     }
 
@@ -39,7 +40,7 @@ class UserService {
     }
 
     async makeAppointment(doctorId, clientId, dateTime, reason) {
-        const isExist = await ExistCheck.checkAppointmentExist({dateTime: dateTime, doctorId: doctorId})
+        const isExist = await AppointmentModel.findOne({dateTime: dateTime, doctorId: doctorId})
         if(isExist) {
             throw ApiError.BadRequest("Запись на это время уже существует")
         }
@@ -47,8 +48,11 @@ class UserService {
         return app
     }
 
-    async cancelAppointment(appId) {
+    async cancelAppointment(appId, userId) {
         const newApp = await ExistCheck.checkAppointmentExist({_id: appId})
+        if(newApp._id !== userId){
+            throw ApiError.NoAccess()
+        }
         newApp.status = "CANCELLED"
         newApp.save()
         return newApp
