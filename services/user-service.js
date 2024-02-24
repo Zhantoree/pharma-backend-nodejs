@@ -5,7 +5,6 @@ import FeedbackModel from "../models/feedback-model.js";
 import ExistCheck from "../exceptions/exist-check.js";
 import AppointmentModel from "../models/appointment-model.js";
 class UserService {
-
     async getAppointments(userId) {
         const monthData = new Date()
         monthData.setMonth(monthData.getMonth() - 1)

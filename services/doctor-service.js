@@ -1,5 +1,4 @@
 import ApiError from "../exceptions/api-error.js";
-import appointmentModel from "../models/appointment-model.js";
 import BlogModel from "../models/blog-model.js";
 import CommentModel from "../models/comment-model.js";
 import ExistCheck from "../exceptions/exist-check.js";
